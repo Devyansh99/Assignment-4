@@ -1,16 +1,16 @@
 {
-  "score": 0,
+  "score": 28,
   "max_score": 150,
-  "pct": 0.0,
-  "reached": 0,
+  "pct": 18.7,
+  "reached": 3,
   "total_pairs": 10,
-  "avg_steps": 0,
-  "agent_time_s": 125.0,
+  "avg_steps": 5.7,
+  "agent_time_s": 108.6,
   "pairs": [
     {
       "pair_id": "1",
       "score": 0,
-      "reason": "no result returned",
+      "reason": "target not reached (ended at: Akihiro Kanamori)",
       "steps": 0,
       "llm_calls": 0,
       "path": []
@@ -18,55 +18,90 @@
     {
       "pair_id": "2",
       "score": 0,
-      "reason": "no result returned",
+      "reason": "target not reached (ended at: 9th Congress of the Russian Communist Party (Bolsheviks))",
       "steps": 0,
       "llm_calls": 0,
       "path": []
     },
     {
       "pair_id": "3",
-      "score": 0,
-      "reason": "no result returned",
-      "steps": 0,
+      "start": "Samurai",
+      "target": "Buddhism",
+      "difficulty": "easy",
+      "score": 14,
+      "max_score": 15,
+      "reason": "valid  1 steps \u2192 14 pts",
+      "steps": 1,
       "llm_calls": 0,
-      "path": []
+      "path": [
+        "https://en.wikipedia.org/wiki/Samurai",
+        "https://en.wikipedia.org/wiki/Buddhism"
+      ]
     },
     {
       "pair_id": "4",
       "score": 0,
-      "reason": "no result returned",
+      "reason": "target not reached (ended at: God of War (2018 video game))",
       "steps": 0,
       "llm_calls": 0,
       "path": []
     },
     {
       "pair_id": "5",
-      "score": 0,
-      "reason": "no result returned",
-      "steps": 0,
-      "llm_calls": 0,
-      "path": []
+      "start": "Chocolate",
+      "target": "Roman law",
+      "difficulty": "medium",
+      "score": 7,
+      "max_score": 15,
+      "reason": "valid  8 steps \u2192 7 pts",
+      "steps": 8,
+      "llm_calls": 2,
+      "path": [
+        "https://en.wikipedia.org/wiki/Chocolate",
+        "https://en.wikipedia.org/wiki/Cocoa_production_in_Ghana",
+        "https://en.wikipedia.org/wiki/Ghana",
+        "https://en.wikipedia.org/wiki/Africa_Confidential",
+        "https://en.wikipedia.org/wiki/Africa",
+        "https://en.wikipedia.org/wiki/Algeria",
+        "https://en.wikipedia.org/wiki/Africa_(Roman_province)",
+        "https://en.wikipedia.org/wiki/History_of_Roman-era_Tunisia",
+        "https://en.wikipedia.org/wiki/Roman_Law"
+      ]
     },
     {
       "pair_id": "6",
       "score": 0,
-      "reason": "no result returned",
+      "reason": "target not reached (ended at: 1955 Yuba\u2013Sutter floods)",
       "steps": 0,
       "llm_calls": 0,
       "path": []
     },
     {
       "pair_id": "7",
-      "score": 0,
-      "reason": "no result returned",
-      "steps": 0,
-      "llm_calls": 0,
-      "path": []
+      "start": "Jazz",
+      "target": "Mathematics",
+      "difficulty": "hard",
+      "score": 7,
+      "max_score": 15,
+      "reason": "valid  8 steps \u2192 7 pts",
+      "steps": 8,
+      "llm_calls": 3,
+      "path": [
+        "https://en.wikipedia.org/wiki/Jazz",
+        "https://en.wikipedia.org/wiki/Jazz_(disambiguation)",
+        "https://en.wikipedia.org/wiki/ABC_Jazz",
+        "https://en.wikipedia.org/wiki/1079_Life",
+        "https://en.wikipedia.org/wiki/Geographic_coordinate_system",
+        "https://en.wikipedia.org/wiki/Spatial_reference_system",
+        "https://en.wikipedia.org/wiki/SRID",
+        "https://en.wikipedia.org/wiki/Rhombicosidodecahedron",
+        "https://en.wikipedia.org/wiki/Mathematics"
+      ]
     },
     {
       "pair_id": "8",
       "score": 0,
-      "reason": "no result returned",
+      "reason": "target not reached (ended at: Bibcode (identifier))",
       "steps": 0,
       "llm_calls": 0,
       "path": []
@@ -74,7 +109,7 @@
     {
       "pair_id": "9",
       "score": 0,
-      "reason": "no result returned",
+      "reason": "target not reached (ended at: 17th GMA Dove Awards)",
       "steps": 0,
       "llm_calls": 0,
       "path": []
@@ -82,7 +117,7 @@
     {
       "pair_id": "10",
       "score": 0,
-      "reason": "no result returned",
+      "reason": "target not reached (ended at: ARIA (disambiguation))",
       "steps": 0,
       "llm_calls": 0,
       "path": []
