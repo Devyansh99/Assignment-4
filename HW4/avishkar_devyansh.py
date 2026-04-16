@@ -38,7 +38,7 @@ import json, re, time, urllib.request
 from wiki_tool import get_links
 
 # API
-_API_KEY = "AIzaSyBZkMZruk4mOf7AuCnz2hKng_-q6VRDL_Y"
+_API_KEY = "AIzaSyByVuCEh7DCmkqmwBVyZ3bVgBC7OY7M7-s"
 _GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
     "gemini-2.5-flash:generateContent?key=" + _API_KEY
