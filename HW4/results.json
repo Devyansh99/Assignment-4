@@ -1,11 +1,11 @@
 {
-  "score": 116,
+  "score": 122,
   "max_score": 150,
-  "pct": 77.3,
+  "pct": 81.3,
   "reached": 10,
   "total_pairs": 10,
-  "avg_steps": 3.4,
-  "agent_time_s": 47.6,
+  "avg_steps": 2.8,
+  "agent_time_s": 60.6,
   "pairs": [
     {
       "pair_id": "1",
@@ -16,7 +16,7 @@
       "max_score": 15,
       "reason": "valid  2 steps \u2192 13 pts",
       "steps": 2,
-      "llm_calls": 1,
+      "llm_calls": 0,
       "path": [
         "https://en.wikipedia.org/wiki/Cricket",
         "https://en.wikipedia.org/wiki/England",
@@ -28,15 +28,14 @@
       "start": "Coffee",
       "target": "Ancient Greece",
       "difficulty": "easy",
-      "score": 12,
+      "score": 13,
       "max_score": 15,
-      "reason": "valid  3 steps \u2192 12 pts",
-      "steps": 3,
-      "llm_calls": 2,
+      "reason": "valid  2 steps \u2192 13 pts",
+      "steps": 2,
+      "llm_calls": 0,
       "path": [
         "https://en.wikipedia.org/wiki/Coffee",
-        "https://en.wikipedia.org/wiki/Americas",
-        "https://en.wikipedia.org/wiki/Ancient_history",
+        "https://en.wikipedia.org/wiki/Crete",
         "https://en.wikipedia.org/wiki/Ancient_Greece"
       ]
     },
@@ -60,19 +59,14 @@
       "start": "Photosynthesis",
       "target": "World War II",
       "difficulty": "medium",
-      "score": 8,
+      "score": 13,
       "max_score": 15,
-      "reason": "valid  7 steps \u2192 8 pts",
-      "steps": 7,
-      "llm_calls": 3,
+      "reason": "valid  2 steps \u2192 13 pts",
+      "steps": 2,
+      "llm_calls": 0,
       "path": [
         "https://en.wikipedia.org/wiki/Photosynthesis",
-        "https://en.wikipedia.org/wiki/Photosystem_II",
-        "https://en.wikipedia.org/wiki/Carbamoyl_phosphate_synthase_II",
-        "https://en.wikipedia.org/wiki/Lyase",
-        "https://en.wikipedia.org/wiki/Enzyme",
-        "https://en.wikipedia.org/wiki/Bread",
-        "https://en.wikipedia.org/wiki/Russo-Ukrainian_war",
+        "https://en.wikipedia.org/wiki/Chemistry",
         "https://en.wikipedia.org/wiki/World_War_II"
       ]
     },
@@ -156,10 +150,10 @@
       "max_score": 15,
       "reason": "valid  2 steps \u2192 13 pts",
       "steps": 2,
-      "llm_calls": 1,
+      "llm_calls": 0,
       "path": [
         "https://en.wikipedia.org/wiki/Telescope",
-        "https://en.wikipedia.org/wiki/Latin",
+        "https://en.wikipedia.org/wiki/Astronomy",
         "https://en.wikipedia.org/wiki/Renaissance"
       ]
     },
