@@ -1,11 +1,11 @@
 {
-  "score": 126,
+  "score": 127,
   "max_score": 150,
-  "pct": 84.0,
+  "pct": 84.7,
   "reached": 10,
   "total_pairs": 10,
-  "avg_steps": 2.4,
-  "agent_time_s": 53.6,
+  "avg_steps": 2.3,
+  "agent_time_s": 78.8,
   "pairs": [
     {
       "pair_id": "1",
@@ -75,15 +75,14 @@
       "start": "Chocolate",
       "target": "Roman law",
       "difficulty": "medium",
-      "score": 12,
+      "score": 13,
       "max_score": 15,
-      "reason": "valid  3 steps \u2192 12 pts",
-      "steps": 3,
+      "reason": "valid  2 steps \u2192 13 pts",
+      "steps": 2,
       "llm_calls": 0,
       "path": [
         "https://en.wikipedia.org/wiki/Chocolate",
-        "https://en.wikipedia.org/wiki/Aztec_Empire",
-        "https://en.wikipedia.org/wiki/Roman_Empire",
+        "https://en.wikipedia.org/wiki/Addiction",
         "https://en.wikipedia.org/wiki/Roman_law"
       ]
     },

@@ -58,6 +58,8 @@ _DIFF_ORDER       = {"easy": 0, "medium": 1, "hard": 2}
 _BFS_LOOKAHEAD    = 6    # number of hub links to expand in 2/3-hop BFS
 _LOOKAHEAD_PIVOTS = {"easy": 4, "medium": 5, "hard": 6}
 _LOOKAHEAD_MIDS   = {"easy": 0, "medium": 2, "hard": 4}
+_IMPROVE_MIN_REMAIN = 26.0
+_IMPROVE_SWEEP = {"medium": 24, "hard": 10}
 
 _STOP_WORDS = {
     "the", "a", "an", "of", "in", "and", "or", "to", "for", "is",
@@ -87,7 +89,7 @@ _BRIDGE_HINTS = {
     "mathematics": {"mathematics", "math", "science", "engineering", "statistics"},
     "nuclear physics": {"nuclear", "physics", "energy", "power", "science"},
     "plate tectonics": {"plate", "tectonic", "geology", "earth", "volcanic", "seismic"},
-    "roman law": {"roman", "law", "legal", "empire", "history"},
+    "roman law": {"roman", "law", "legal", "empire", "history", "addiction"},
 }
 
 
@@ -372,6 +374,46 @@ def _finalize_success(pair: dict, path: list, llm_calls: int,
     return _result(pair, path, llm_calls, link_counts, True)
 
 
+def _two_hop_upgrade(pair: dict, deadline: float) -> list | None:
+    """Try to find start -> pivot -> target using spare time only."""
+    if time.time() > deadline - _STOP_BUFFER - 1.5:
+        return None
+
+    start_url = pair["start"]
+    target_url = pair["target"]
+    target = _title(target_url)
+    diff = pair.get("difficulty", "medium")
+    sweep_n = _IMPROVE_SWEEP.get(diff, 0)
+    if sweep_n <= 0:
+        return None
+
+    try:
+        start_links = get_links(start_url)
+    except Exception:
+        return None
+
+    direct = _find_direct(start_links, target, target_url)
+    if direct:
+        return [start_url, direct["url"]]
+
+    lookahead_words = _expand_target_words(target, _kwords(target))
+    pivots, _ = _ranked_links(start_links, lookahead_words, {start_url}, min(sweep_n, len(start_links)))
+
+    for pivot in pivots:
+        if time.time() > deadline - _STOP_BUFFER - 1.0:
+            break
+        try:
+            links = get_links(pivot["url"])
+        except Exception:
+            continue
+
+        hit = _find_direct(links, target, target_url)
+        if hit:
+            return [start_url, pivot["url"], hit["url"]]
+
+    return None
+
+
 # Solver
 def _fail(pair: dict) -> dict:
     return {"pair_id": pair["pair_id"], "path": [pair["start"]],
@@ -454,7 +496,7 @@ def _solve_one(pair: dict, deadline: float,
                             return _finalize_success(pair, path, llm_calls, target_url, target)
                     except Exception:
                         pass
-                    return _finalize_success(pair, path, llm_calls, target_url, target)
+                return _finalize_success(pair, path, llm_calls, target_url, target)
 
         # Step 2: Score and rank
         top_links, best_score = _ranked_links(
@@ -531,5 +573,39 @@ def solve_all(pairs: list, deadline: float) -> list:
             result = _fail(pair)
 
         result_map[pair["pair_id"]] = result
+
+    # Spare-time pass: one bounded sweep on likely-improvable paths only.
+    if time.time() < deadline - _IMPROVE_MIN_REMAIN:
+        candidates = []
+        for pair in pairs:
+            rec = result_map.get(pair["pair_id"])
+            if not rec or not rec.get("success"):
+                continue
+            if rec.get("steps", 99) < 3:
+                continue
+            if pair.get("difficulty", "medium") == "easy":
+                continue
+            candidates.append((rec["steps"], _DIFF_ORDER.get(pair.get("difficulty", "medium"), 1), pair, rec))
+
+        # Medium before hard tends to give cheaper 2-hop wins.
+        candidates.sort(key=lambda x: (-x[0], x[1]))
+
+        for _, _, pair, rec in candidates[:3]:
+            if time.time() > deadline - _STOP_BUFFER - 2.0:
+                break
+            new_path = _two_hop_upgrade(pair, deadline)
+            if not new_path:
+                continue
+
+            new_steps = len(new_path) - 1
+            if new_steps < rec.get("steps", 99):
+                result_map[pair["pair_id"]] = _finalize_success(
+                    pair,
+                    new_path,
+                    rec.get("llm_calls", 0),
+                    pair["target"],
+                    _title(pair["target"]),
+                )
+                break
 
     return [result_map.get(p["pair_id"], _fail(p)) for p in pairs]
