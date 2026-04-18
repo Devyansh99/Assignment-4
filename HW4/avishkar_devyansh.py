@@ -34,7 +34,7 @@ New improvements over v7:
     slices, hard pairs get more. Prevents easy pairs eating all the time.
 """
 
-import json, re, time, urllib.request
+import json, os, re, time, urllib.request
 from wiki_tool import get_links
 
 # API
@@ -60,6 +60,7 @@ _LOOKAHEAD_PIVOTS = {"easy": 4, "medium": 5, "hard": 6}
 _LOOKAHEAD_MIDS   = {"easy": 0, "medium": 2, "hard": 4}
 _IMPROVE_MIN_REMAIN = 30.0
 _IMPROVE_SWEEP = {"medium": 28, "hard": 14}
+_PRIORS_FILE = "bridge_priors.json"
 
 _STOP_WORDS = {
     "the", "a", "an", "of", "in", "and", "or", "to", "for", "is",
@@ -93,6 +94,32 @@ _BRIDGE_HINTS = {
 }
 
 
+def _load_bridge_priors(path: str) -> tuple[set, dict]:
+    """Load optional mined priors; missing/invalid files degrade gracefully."""
+    if not os.path.exists(path):
+        return set(), {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:
+        return set(), {}
+
+    hubs_raw = data.get("global_hubs", [])
+    tgt_raw = data.get("target_boost_words", {})
+    hubs = {_norm(x) for x in hubs_raw if isinstance(x, str) and x.strip()}
+
+    tgt_words = {}
+    if isinstance(tgt_raw, dict):
+        for k, vals in tgt_raw.items():
+            if not isinstance(k, str) or not isinstance(vals, list):
+                continue
+            words = {w.strip().lower() for w in vals if isinstance(w, str) and w.strip()}
+            if words:
+                tgt_words[_norm(k)] = words
+
+    return hubs, tgt_words
+
+
 # Gemini wrapper
 def _ask_gemini(prompt: str, max_tokens: int = 6, timeout: int = 18) -> str:
     body = json.dumps({
@@ -124,6 +151,9 @@ def _norm(title: str) -> str:
     return " ".join(t.split())
 
 
+_MINED_GLOBAL_HUBS, _MINED_TARGET_HINTS = _load_bridge_priors(_PRIORS_FILE)
+
+
 def _is_symbol_title(text: str) -> bool:
     t = text.strip()
     if re.fullmatch(r"[^a-zA-Z]+|[A-Z]{1,2}", t):
@@ -133,10 +163,13 @@ def _is_symbol_title(text: str) -> bool:
     return False
 
 
-def _expand_target_words(target: str, target_words: set) -> set:
+def _expand_target_words(target: str, target_words: set,
+                         include_mined: bool = False) -> set:
     words = set(target_words)
     key = _norm(target)
     words.update(_BRIDGE_HINTS.get(key, set()))
+    if include_mined:
+        words.update(_MINED_TARGET_HINTS.get(key, set()))
     if "physics" in key:
         words.update({"science", "energy"})
     if "science" in key:
@@ -163,9 +196,12 @@ def _find_direct(links: list, target: str, target_url: str) -> dict | None:
     return None
 
 
-def _hub_penalty(raw_len: int, text: str) -> int:
-    if text.lower().strip() in _KNOWN_HUBS:
+def _hub_penalty(raw_len: int, text: str, include_mined: bool = False) -> int:
+    text_norm = _norm(text)
+    if text_norm in _KNOWN_HUBS:
         return -100
+    if include_mined and text_norm in _MINED_GLOBAL_HUBS:
+        return -120
     if _is_symbol_title(text) or raw_len < _MIN_HUB_LEN:
         return 3000 + raw_len
     if raw_len > _MAX_HUB_LEN:
@@ -174,14 +210,19 @@ def _hub_penalty(raw_len: int, text: str) -> int:
 
 
 def _ranked_links(links: list, target_words: set,
-                  visited: set, n: int) -> tuple:
+                  visited: set, n: int,
+                  include_mined_hubs: bool = False) -> tuple:
     scored = []
     for i, link in enumerate(links):
         if link["url"] in visited:
             continue
         lw    = _kwords(link["text"] + " " + _title(link["url"]))
         score = len(lw & target_words)
-        tie   = _hub_penalty(len(link["text"]), link["text"])
+        tie   = _hub_penalty(
+            len(link["text"]),
+            link["text"],
+            include_mined=include_mined_hubs,
+        )
         scored.append((score, tie, i, link))
     if not scored:
         scored = [(0, 3000, i, l) for i, l in enumerate(links)]
@@ -406,8 +447,18 @@ def _two_hop_upgrade(pair: dict, deadline: float) -> list | None:
     if direct:
         return [start_url, direct["url"]]
 
-    lookahead_words = _expand_target_words(target, _kwords(target))
-    pivots, _ = _ranked_links(start_links, lookahead_words, {start_url}, min(sweep_n, len(start_links)))
+    lookahead_words = _expand_target_words(
+        target,
+        _kwords(target),
+        include_mined=True,
+    )
+    pivots, _ = _ranked_links(
+        start_links,
+        lookahead_words,
+        {start_url},
+        min(sweep_n, len(start_links)),
+        include_mined_hubs=True,
+    )
 
     for pivot in pivots:
         if time.time() > deadline - _STOP_BUFFER - 1.0:

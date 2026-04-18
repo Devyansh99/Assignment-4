@@ -1,0 +1,144 @@
+{
+  "generated_at": "2026-04-18 17:47:09",
+  "elapsed_s": 40.03,
+  "pairs_processed": 10,
+  "pairs_solved": 6,
+  "global_hubs": [
+    "india",
+    "china",
+    "japan",
+    "aden",
+    "united states",
+    "ancient greek language",
+    "energy",
+    "oil war",
+    "astronomy",
+    "dance science",
+    "biology",
+    "geology",
+    "acne",
+    "boil",
+    "cyst",
+    "gene",
+    "rash",
+    "scar",
+    "wart",
+    "sports science",
+    "yoga",
+    "dance",
+    "polka",
+    "waltz",
+    "journal of science and medicine in sport",
+    "guam",
+    "iowa",
+    "ohio",
+    "europe",
+    "nuclear triad",
+    "agni",
+    "holi",
+    "atar",
+    "atri"
+  ],
+  "target_boost_words": {
+    "industrial revolution": [
+      "india"
+    ],
+    "ancient greece": [
+      "aden",
+      "language",
+      "greek",
+      "ancient",
+      "china",
+      "india",
+      "united",
+      "states"
+    ],
+    "world war ii": [
+      "energy",
+      "biology",
+      "geology"
+    ],
+    "roman law": [
+      "acne",
+      "boil",
+      "cyst",
+      "gene",
+      "rash",
+      "scar",
+      "wart"
+    ],
+    "computer science": [
+      "science",
+      "dance",
+      "sports",
+      "yoga",
+      "polka",
+      "waltz",
+      "medicine",
+      "journal",
+      "sport"
+    ],
+    "mathematics": [
+      "united",
+      "states",
+      "china",
+      "guam",
+      "iowa",
+      "ohio"
+    ],
+    "nuclear physics": [
+      "india",
+      "china",
+      "japan",
+      "europe",
+      "nuclear",
+      "triad",
+      "united",
+      "states",
+      "agni",
+      "holi"
+    ],
+    "renaissance": [
+      "astronomy"
+    ],
+    "plate tectonics": [
+      "japan",
+      "india",
+      "china"
+    ]
+  },
+  "sample_paths": {
+    "1": [
+      "Cricket",
+      "India",
+      "Industrial Revolution"
+    ],
+    "2": [
+      "Coffee",
+      "Aden",
+      "Ancient Greek language",
+      "Ancient Greece"
+    ],
+    "3": [
+      "Samurai",
+      "Buddhism"
+    ],
+    "4": [
+      "Photosynthesis",
+      "Energy",
+      "Oil war",
+      "World War II"
+    ],
+    "9": [
+      "Telescope",
+      "Astronomy",
+      "Renaissance"
+    ],
+    "10": [
+      "Haiku",
+      "Japan",
+      "India",
+      "Plate tectonics"
+    ]
+  }
+}
