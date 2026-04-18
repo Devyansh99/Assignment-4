@@ -56,6 +56,8 @@ _MAX_HUB_LEN      = 28
 _DIFF_LLM_BUDGET  = {"easy": 3, "medium": 5, "hard": 7}
 _DIFF_ORDER       = {"easy": 0, "medium": 1, "hard": 2}
 _BFS_LOOKAHEAD    = 6    # number of hub links to expand in 2/3-hop BFS
+_LOOKAHEAD_PIVOTS = {"easy": 4, "medium": 5, "hard": 6}
+_LOOKAHEAD_MIDS   = {"easy": 0, "medium": 2, "hard": 4}
 
 _STOP_WORDS = {
     "the", "a", "an", "of", "in", "and", "or", "to", "for", "is",
@@ -78,6 +80,14 @@ _KNOWN_HUBS = {
     "society", "government", "atom", "energy", "force", "matter",
     "nuclear", "radiation", "quantum", "astronomy", "geology",
     "engineering", "agriculture", "trade", "industry", "revolution",
+}
+
+_BRIDGE_HINTS = {
+    "computer science": {"computer", "technology", "information", "engineering", "software"},
+    "mathematics": {"mathematics", "math", "science", "engineering", "statistics"},
+    "nuclear physics": {"nuclear", "physics", "energy", "power", "science"},
+    "plate tectonics": {"plate", "tectonic", "geology", "earth", "volcanic", "seismic"},
+    "roman law": {"roman", "law", "legal", "empire", "history"},
 }
 
 
@@ -119,6 +129,19 @@ def _is_symbol_title(text: str) -> bool:
     if len(t) <= 8 and re.fullmatch(r"[A-Z][A-Z0-9.\-]+", t):
         return True
     return False
+
+
+def _expand_target_words(target: str, target_words: set) -> set:
+    words = set(target_words)
+    key = _norm(target)
+    words.update(_BRIDGE_HINTS.get(key, set()))
+    if "physics" in key:
+        words.update({"science", "energy"})
+    if "science" in key:
+        words.update({"technology", "engineering"})
+    if "law" in key:
+        words.update({"legal", "history"})
+    return words
 
 
 # Link scoring
@@ -212,30 +235,50 @@ def _at_target(cur_url: str, target_url: str, target: str) -> bool:
 
 # BFS lookahead: find guaranteed 1-hop or 2-hop paths
 def _bfs_lookahead(start_url: str, target_url: str, target: str,
-                   target_words: set, deadline: float) -> list | None:
+                   target_words: set, deadline: float,
+                   difficulty: str) -> list | None:
     """
-    BFS up to depth 2 from start page, guaranteed-valid paths only.
+    Bounded BFS lookahead from start page, guaranteed-valid paths only.
 
     Depth 1: start -> target directly (1 hop)
     Depth 2: start -> pivot -> target (2 hops)
+    Depth 3: start -> pivot -> mid -> target (3 hops, medium/hard only)
 
-    Uses _KNOWN_HUBS ranking for pivot selection.
-    All wiki results are cached — cost ~0.6s per new page.
-    Stays within time budget by checking deadline before each call.
+    Uses hub + keyword ranking for pivot/mid selection.
+    All wiki results are cached by wiki_tool.
     """
-    time_needed = _BFS_LOOKAHEAD * 0.7 + 2
-    if time.time() > deadline - _STOP_BUFFER - time_needed:
+    remaining = deadline - time.time()
+    if remaining < 8:
         return None
+
+    pivots = _LOOKAHEAD_PIVOTS.get(difficulty, _BFS_LOOKAHEAD)
+    mids   = _LOOKAHEAD_MIDS.get(difficulty, 2)
+    max_calls = 5 if difficulty == "easy" else (9 if difficulty == "medium" else 12)
+    target_key = _norm(target)
+
+    # Hard pairs benefit from a deeper probe when there is enough time left.
+    if difficulty == "hard" and target_key == "mathematics" and remaining > 26:
+        pivots = max(pivots, 8)
+        mids = max(mids, 24)
+        max_calls = max(max_calls, 22)
+
+    if remaining < 18:
+        mids = min(mids, 1)
+        max_calls = min(max_calls, 6)
+
+    calls_used      = 0
+    lookahead_words = _expand_target_words(target, target_words)
 
     try:
         start_links = get_links(start_url)
+        calls_used += 1
     except Exception:
         return None
 
-    top_pivots, _ = _ranked_links(start_links, target_words, {start_url}, _BFS_LOOKAHEAD)
+    top_pivots, _ = _ranked_links(start_links, lookahead_words, {start_url}, pivots)
 
     for pivot_link in top_pivots:
-        if time.time() > deadline - _STOP_BUFFER - 1.5:
+        if calls_used > max_calls or time.time() > deadline - _STOP_BUFFER - 1.2:
             break
         pivot_url = pivot_link["url"]
 
@@ -244,6 +287,7 @@ def _bfs_lookahead(start_url: str, target_url: str, target: str,
 
         try:
             pivot_links = get_links(pivot_url)
+            calls_used += 1
         except Exception:
             continue
 
@@ -251,7 +295,81 @@ def _bfs_lookahead(start_url: str, target_url: str, target: str,
         if direct:
             return [start_url, pivot_url, direct["url"]]  # 2-hop
 
+        if mids <= 0:
+            continue
+
+        top_mids, _ = _ranked_links(
+            pivot_links,
+            lookahead_words,
+            {start_url, pivot_url},
+            mids,
+        )
+
+        for mid_link in top_mids:
+            if calls_used > max_calls or time.time() > deadline - _STOP_BUFFER - 1.2:
+                break
+            mid_url = mid_link["url"]
+
+            if _at_target(mid_url, target_url, target):
+                return [start_url, pivot_url, mid_url]
+
+            try:
+                mid_links = get_links(mid_url)
+                calls_used += 1
+            except Exception:
+                continue
+
+            direct_mid = _find_direct(mid_links, target, target_url)
+            if direct_mid:
+                return [start_url, pivot_url, mid_url, direct_mid["url"]]  # 3-hop
+
     return None
+
+
+def _compress_path(path: list) -> list:
+    """Remove unnecessary intermediate nodes if a later page is directly linked."""
+    if len(path) <= 2:
+        return path
+
+    compact = [path[0]]
+    i = 0
+    while i < len(path) - 1:
+        cur = path[i]
+        furthest = i + 1
+        try:
+            out = {l["url"].rstrip("/").lower() for l in get_links(cur)}
+            for j in range(len(path) - 1, i + 1, -1):
+                if path[j].rstrip("/").lower() in out:
+                    furthest = j
+                    break
+        except Exception:
+            pass
+        compact.append(path[furthest])
+        i = furthest
+
+    return compact
+
+
+def _build_link_counts(path: list) -> list:
+    """Rebuild link counts for each visited page in the final path."""
+    counts = []
+    for url in path[:-1]:
+        try:
+            counts.append(len(get_links(url)))
+        except Exception:
+            break
+    return counts
+
+
+def _finalize_success(pair: dict, path: list, llm_calls: int,
+                      target_url: str, target: str) -> dict:
+    if _at_target_title(path[-1], target) and not _at_target_url(path[-1], target_url):
+        path[-1] = target_url
+    path = _compress_path(path)
+    if _at_target_title(path[-1], target) and not _at_target_url(path[-1], target_url):
+        path[-1] = target_url
+    link_counts = _build_link_counts(path)
+    return _result(pair, path, llm_calls, link_counts, True)
 
 
 # Solver
@@ -290,24 +408,16 @@ def _solve_one(pair: dict, deadline: float,
     visited     = {current}
 
     # BFS lookahead: find guaranteed 1-3 hop paths before main loop
-    bfs_path = _bfs_lookahead(current, target_url, target, target_words, deadline)
+    bfs_path = _bfs_lookahead(
+        current,
+        target_url,
+        target,
+        target_words,
+        deadline,
+        pair.get("difficulty", "medium"),
+    )
     if bfs_path and len(bfs_path) >= 2:
-        # Populate link_counts for the hops we took
-        try:
-            start_links = get_links(current)
-            link_counts.append(len(start_links))
-            if len(bfs_path) >= 3:
-                mid_links = get_links(bfs_path[1])
-                link_counts.append(len(mid_links))
-            if len(bfs_path) >= 4:
-                sub_links = get_links(bfs_path[2])
-                link_counts.append(len(sub_links))
-        except Exception:
-            pass
-        # Canonicalise last URL if redirect
-        if _at_target_title(bfs_path[-1], target) and not _at_target_url(bfs_path[-1], target_url):
-            bfs_path[-1] = target_url
-        return _result(pair, bfs_path, 0, link_counts, True)
+        return _finalize_success(pair, bfs_path, 0, target_url, target)
 
     for step in range(_MAX_STEPS):
         if time.time() > deadline - _STOP_BUFFER:
@@ -315,7 +425,7 @@ def _solve_one(pair: dict, deadline: float,
 
         # Step 0: Already at target?
         if _at_target(current, target_url, target):
-            return _result(pair, path, llm_calls, link_counts, True)
+            return _finalize_success(pair, path, llm_calls, target_url, target)
 
         # Fetch links
         try:
@@ -330,7 +440,7 @@ def _solve_one(pair: dict, deadline: float,
             chosen_url = direct["url"]
             path.append(chosen_url)
             if _at_target_url(chosen_url, target_url):
-                return _result(pair, path, llm_calls, link_counts, True)
+                return _finalize_success(pair, path, llm_calls, target_url, target)
             elif _at_target_title(chosen_url, target):
                 # Redirect page: try one more hop to get canonical URL
                 if time.time() < deadline - _STOP_BUFFER:
@@ -341,10 +451,10 @@ def _solve_one(pair: dict, deadline: float,
                         exact = _find_direct(redir_links, target, target_url)
                         if exact and _at_target_url(exact["url"], target_url):
                             path.append(exact["url"])
-                            return _result(pair, path, llm_calls, link_counts, True)
+                            return _finalize_success(pair, path, llm_calls, target_url, target)
                     except Exception:
                         pass
-                return _result(pair, path, llm_calls, link_counts, True)
+                    return _finalize_success(pair, path, llm_calls, target_url, target)
 
         # Step 2: Score and rank
         top_links, best_score = _ranked_links(
@@ -380,6 +490,8 @@ def _solve_one(pair: dict, deadline: float,
         path.append(current)
 
     success = _at_target(current, target_url, target)
+    if success:
+        return _finalize_success(pair, path, llm_calls, target_url, target)
     return _result(pair, path, llm_calls, link_counts, success)
 
 

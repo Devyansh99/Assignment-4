@@ -1,11 +1,11 @@
 {
-  "score": 122,
+  "score": 126,
   "max_score": 150,
-  "pct": 81.3,
+  "pct": 84.0,
   "reached": 10,
   "total_pairs": 10,
-  "avg_steps": 2.8,
-  "agent_time_s": 70.1,
+  "avg_steps": 2.4,
+  "agent_time_s": 53.6,
   "pairs": [
     {
       "pair_id": "1",
@@ -79,10 +79,10 @@
       "max_score": 15,
       "reason": "valid  3 steps \u2192 12 pts",
       "steps": 3,
-      "llm_calls": 2,
+      "llm_calls": 0,
       "path": [
         "https://en.wikipedia.org/wiki/Chocolate",
-        "https://en.wikipedia.org/wiki/Candy",
+        "https://en.wikipedia.org/wiki/Aztec_Empire",
         "https://en.wikipedia.org/wiki/Roman_Empire",
         "https://en.wikipedia.org/wiki/Roman_law"
       ]
@@ -92,16 +92,15 @@
       "start": "Ballet",
       "target": "Computer science",
       "difficulty": "medium",
-      "score": 11,
+      "score": 12,
       "max_score": 15,
-      "reason": "valid  4 steps \u2192 11 pts",
-      "steps": 4,
-      "llm_calls": 3,
+      "reason": "valid  3 steps \u2192 12 pts",
+      "steps": 3,
+      "llm_calls": 0,
       "path": [
         "https://en.wikipedia.org/wiki/Ballet",
-        "https://en.wikipedia.org/wiki/Dance_science",
-        "https://en.wikipedia.org/wiki/Sports_science",
-        "https://en.wikipedia.org/wiki/Computer_science_in_sport",
+        "https://en.wikipedia.org/wiki/Dance_technology",
+        "https://en.wikipedia.org/wiki/Information_technology",
         "https://en.wikipedia.org/wiki/Computer_science"
       ]
     },
@@ -110,16 +109,15 @@
       "start": "Jazz",
       "target": "Mathematics",
       "difficulty": "hard",
-      "score": 11,
+      "score": 12,
       "max_score": 15,
-      "reason": "valid  4 steps \u2192 11 pts",
-      "steps": 4,
-      "llm_calls": 3,
+      "reason": "valid  3 steps \u2192 12 pts",
+      "steps": 3,
+      "llm_calls": 0,
       "path": [
         "https://en.wikipedia.org/wiki/Jazz",
         "https://en.wikipedia.org/wiki/United_States",
-        "https://en.wikipedia.org/wiki/China",
-        "https://en.wikipedia.org/wiki/Science%2C_technology%2C_engineering%2C_and_mathematics",
+        "https://en.wikipedia.org/wiki/Texas",
         "https://en.wikipedia.org/wiki/Mathematics"
       ]
     },
@@ -128,16 +126,15 @@
       "start": "Yoga",
       "target": "Nuclear physics",
       "difficulty": "hard",
-      "score": 11,
+      "score": 12,
       "max_score": 15,
-      "reason": "valid  4 steps \u2192 11 pts",
-      "steps": 4,
-      "llm_calls": 3,
+      "reason": "valid  3 steps \u2192 12 pts",
+      "steps": 3,
+      "llm_calls": 0,
       "path": [
         "https://en.wikipedia.org/wiki/Yoga",
-        "https://en.wikipedia.org/wiki/India",
-        "https://en.wikipedia.org/wiki/Nuclear_triad",
-        "https://en.wikipedia.org/wiki/Nuclear_ethics",
+        "https://en.wikipedia.org/wiki/Energy_(esotericism)",
+        "https://en.wikipedia.org/wiki/Energy",
         "https://en.wikipedia.org/wiki/Nuclear_physics"
       ]
     },
@@ -162,16 +159,15 @@
       "start": "Haiku",
       "target": "Plate tectonics",
       "difficulty": "hard",
-      "score": 11,
+      "score": 12,
       "max_score": 15,
-      "reason": "valid  4 steps \u2192 11 pts",
-      "steps": 4,
-      "llm_calls": 3,
+      "reason": "valid  3 steps \u2192 12 pts",
+      "steps": 3,
+      "llm_calls": 0,
       "path": [
         "https://en.wikipedia.org/wiki/Haiku",
         "https://en.wikipedia.org/wiki/Japan",
-        "https://en.wikipedia.org/wiki/Asia",
-        "https://en.wikipedia.org/wiki/Cocos_Plate",
+        "https://en.wikipedia.org/wiki/Volcanic_eruptions",
         "https://en.wikipedia.org/wiki/Plate_tectonics"
       ]
     }
