@@ -38,7 +38,7 @@ import json, re, time, urllib.request
 from wiki_tool import get_links
 
 # API
-_API_KEY = "AIzaSyByVuCEh7DCmkqmwBVyZ3bVgBC7OY7M7-s"
+_API_KEY = "AIzaSyCozGISvn_PPCvH9kfkppQ1d2pauKHfXns"
 _GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
     "gemini-2.5-flash:generateContent?key=" + _API_KEY
@@ -58,8 +58,8 @@ _DIFF_ORDER       = {"easy": 0, "medium": 1, "hard": 2}
 _BFS_LOOKAHEAD    = 6    # number of hub links to expand in 2/3-hop BFS
 _LOOKAHEAD_PIVOTS = {"easy": 4, "medium": 5, "hard": 6}
 _LOOKAHEAD_MIDS   = {"easy": 0, "medium": 2, "hard": 4}
-_IMPROVE_MIN_REMAIN = 26.0
-_IMPROVE_SWEEP = {"medium": 24, "hard": 10}
+_IMPROVE_MIN_REMAIN = 30.0
+_IMPROVE_SWEEP = {"medium": 28, "hard": 14}
 
 _STOP_WORDS = {
     "the", "a", "an", "of", "in", "and", "or", "to", "for", "is",
@@ -279,6 +279,8 @@ def _bfs_lookahead(start_url: str, target_url: str, target: str,
 
     top_pivots, _ = _ranked_links(start_links, lookahead_words, {start_url}, pivots)
 
+    best_depth3 = None
+
     for pivot_link in top_pivots:
         if calls_used > max_calls or time.time() > deadline - _STOP_BUFFER - 1.2:
             break
@@ -296,6 +298,11 @@ def _bfs_lookahead(start_url: str, target_url: str, target: str,
         direct = _find_direct(pivot_links, target, target_url)
         if direct:
             return [start_url, pivot_url, direct["url"]]  # 2-hop
+
+        # Once we have a valid 3-hop candidate, continue scanning pivots only
+        # for cheaper 2-hop wins and skip additional mid expansions.
+        if best_depth3 is not None:
+            continue
 
         if mids <= 0:
             continue
@@ -323,9 +330,12 @@ def _bfs_lookahead(start_url: str, target_url: str, target: str,
 
             direct_mid = _find_direct(mid_links, target, target_url)
             if direct_mid:
-                return [start_url, pivot_url, mid_url, direct_mid["url"]]  # 3-hop
+                # Keep the first valid 3-hop candidate, but continue probing
+                # pivots for a possible 2-hop win.
+                if best_depth3 is None:
+                    best_depth3 = [start_url, pivot_url, mid_url, direct_mid["url"]]
 
-    return None
+    return best_depth3
 
 
 def _compress_path(path: list) -> list:
@@ -590,6 +600,7 @@ def solve_all(pairs: list, deadline: float) -> list:
         # Medium before hard tends to give cheaper 2-hop wins.
         candidates.sort(key=lambda x: (-x[0], x[1]))
 
+        improvements = 0
         for _, _, pair, rec in candidates[:3]:
             if time.time() > deadline - _STOP_BUFFER - 2.0:
                 break
@@ -606,6 +617,8 @@ def solve_all(pairs: list, deadline: float) -> list:
                     pair["target"],
                     _title(pair["target"]),
                 )
-                break
+                improvements += 1
+                if improvements >= 2:
+                    break
 
     return [result_map.get(p["pair_id"], _fail(p)) for p in pairs]
